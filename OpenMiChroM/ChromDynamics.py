@@ -1248,7 +1248,7 @@ class MiChroM:
         return np.vstack([x,y,z]).T
 
 
-    def createSpringSpiral(self, ChromSeq=None, isRing=False):
+    def createSpringSpiral(self, ChromSeq=None, isRing=False, chr=None):
         
         R"""
         Creates a spring-spiral-like shape for the initial configuration of the chromosome polymer.
@@ -1269,7 +1269,7 @@ class MiChroM:
         x = []
         y = []
         z = []
-        self._translate_type(ChromSeq)
+        self._translate_type(ChromSeq,chr)
         beads = len(self.type_list_letter)
         
         for i in range(beads):
@@ -1313,7 +1313,7 @@ class MiChroM:
         
         return random.choices(population=[0,1,2,3,4,5], k=Nbeads)
     
-    def _translate_type(self, filename):
+    def _translate_type(self, filename,chr):
         
         R"""Internal function that converts the letters of the types numbers following the rule: 'A1':0, 'A2':1, 'B1':2, 'B2':3,'B3':4,'B4':5, 'NA' :6.
         
@@ -1322,21 +1322,33 @@ class MiChroM:
             filename (file, required):
                 Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`_.
 
-        """        
-        
+        """
         self.diff_types = []
         self.type_list_letter = []
 
         af = open(filename,'r')
         pos = af.read().splitlines()
-        
-        for t in range(len(pos)):
-            pos[t] = pos[t].split()
-            if pos[t][1] in self.diff_types:
-                self.type_list_letter.append(pos[t][1])
+
+        if filename[-3:]!='bed':
+            if chr==None:
+                raise ValueError("Select a valid chromosome")
             else:
-                self.diff_types.append(pos[t][1]) 
-                self.type_list_letter.append(pos[t][1])
+                for t in range(1,len(pos)):
+                    pos[t] = pos[t].split()
+                    if pos[t][0]=='chr'+str(chr):
+                        if pos[t][3] in self.diff_types:
+                            self.type_list_letter.append(pos[t][3])
+                        else:
+                            self.diff_types.append(pos[t][3]) 
+                            self.type_list_letter.append(pos[t][3])
+        else:
+            for t in range(len(pos)):
+                pos[t] = pos[t].split()
+                if pos[t][1] in self.diff_types:
+                    self.type_list_letter.append(pos[t][1])
+                else:
+                    self.diff_types.append(pos[t][1]) 
+                    self.type_list_letter.append(pos[t][1])
 
     def createLine(self, ChromSeq):
         
