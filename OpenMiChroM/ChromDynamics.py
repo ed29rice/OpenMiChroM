@@ -1329,7 +1329,7 @@ class MiChroM:
         af = open(filename,'r')
         pos = af.read().splitlines()
 
-        if filename[-3:]!='bed':
+        if filename[-3:]=='bed':
             if chr==None:
                 raise ValueError("Select a valid chromosome")
             else:
