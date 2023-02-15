@@ -1331,7 +1331,7 @@ class MiChroM:
 
         if filename[-3:]=='bed':
             if chr==None:
-                raise ValueError("Select a valid chromosome")
+                raise ValueError("Select a valid chromosome present on the bed file")
             else:
                 for t in range(1,len(pos)):
                     pos[t] = pos[t].split()
@@ -1341,6 +1341,8 @@ class MiChroM:
                         else:
                             self.diff_types.append(pos[t][3]) 
                             self.type_list_letter.append(pos[t][3])
+            if len(self.type_list_letter):
+                raise ValueError("Select a valid chromosome present on the bed file")
         else:
             for t in range(len(pos)):
                 pos[t] = pos[t].split()
@@ -1350,7 +1352,7 @@ class MiChroM:
                     self.diff_types.append(pos[t][1]) 
                     self.type_list_letter.append(pos[t][1])
 
-    def createLine(self, ChromSeq):
+    def createLine(self, ChromSeq, chr=None):
         
         R"""
         Creates a straight line for the initial configuration of the chromosome polymer.
@@ -1368,7 +1370,7 @@ class MiChroM:
    
         """
 
-        self._translate_type(ChromSeq)
+        self._translate_type(ChromSeq, chr=chr)
         beads = len(self.type_list_letter)
 
         length_scale = 1.0
@@ -1386,7 +1388,7 @@ class MiChroM:
 
         return np.vstack([x,y,z]).T
     
-    def createRandomWalk(self, ChromSeq=None):    
+    def createRandomWalk(self, ChromSeq=None, chr=None):    
         R"""
         Creates a chromosome polymer chain with beads position based on a random walk.
         
@@ -1400,7 +1402,7 @@ class MiChroM:
    
         """
         
-        self._translate_type(ChromSeq)
+        self._translate_type(ChromSeq, chr=chr)
         Nbeads = len(self.type_list_letter)
 
         segment_length = 1
@@ -1421,7 +1423,7 @@ class MiChroM:
 
         return np.vstack([x, y, z]).T
 
-    def initStructure(self, mode='auto', CoordFiles=None, ChromSeq=None, isRing=False):
+    def initStructure(self, mode='auto', CoordFiles=None, ChromSeq=None, isRing=False, chr=None):
 
         R"""
         Creates the coordinates for the initial configuration of the chromosomal chains and sets their sequence information.
@@ -1484,15 +1486,15 @@ class MiChroM:
 
         if mode == 'line':
 
-            return self.createLine(ChromSeq=ChromSeq[0])
+            return self.createLine(ChromSeq=ChromSeq[0], chr=chr)
 
         elif mode == 'spring':
 
-            return self.createSpringSpiral(ChromSeq=ChromSeq[0], isRing=isRing)
+            return self.createSpringSpiral(ChromSeq=ChromSeq[0], isRing=isRing, chr=chr)
 
         elif mode == 'random':
 
-            return self.createRandomWalk(ChromSeq=ChromSeq[0])
+            return self.createRandomWalk(ChromSeq=ChromSeq[0], chr=chr)
 
         elif mode == 'ndb':
 
