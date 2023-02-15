@@ -1341,7 +1341,7 @@ class MiChroM:
                         else:
                             self.diff_types.append(pos[t][3]) 
                             self.type_list_letter.append(pos[t][3])
-            if len(self.type_list_letter):
+            if len(self.type_list_letter)==0:
                 raise ValueError("Select a valid chromosome present on the bed file")
         else:
             for t in range(len(pos)):
