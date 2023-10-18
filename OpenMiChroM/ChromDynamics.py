@@ -1085,7 +1085,7 @@ class MiChroM:
         return np.vstack([x,y,z]).T
     
     
-    def loadGRO(self, GROfiles=None, ChromSeq=None):
+    def loadGRO(self, GROfiles=None, ChromSeq=None, chrIDs=None):
         R"""
         Loads a single or multiple *.gro* files and gets position and types of the chromosome beads.
         Initially, the MiChroM energy function was implemented in GROMACS. Details on how to run and use these files can be found at the `Nucleome Data Bank <https://ndb.rice.edu/GromacsInput-Documentation>`__.
@@ -1171,7 +1171,7 @@ class MiChroM:
         else:
             return 'NA'
                     
-    def loadPDB(self, PDBfiles=None, ChromSeq=None):
+    def loadPDB(self, PDBfiles=None, ChromSeq=None, chrIDs=None):
         
         R"""
         Loads a single or multiple *.pdb* files and gets position and types of the chromosome beads.
@@ -1247,19 +1247,20 @@ class MiChroM:
 
         return np.vstack([x,y,z]).T
 
-
-    def createSpringSpiral(self, ChromSeq=None, isRing=False, chr=None):
+    def createSpringSpiral(self, ChromSeq=None, isRing=False, chrID=None):
         
         R"""
         Creates a spring-spiral-like shape for the initial configuration of the chromosome polymer.
         
         Args:
-
             ChromSeq (file, required):
-                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. 
+                A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                It can also be a bed file (e.g. output of `PyMEGABASE <https://github.com/ed29rice/PyMEGABASE>`). In this case, chromosome identifier is required. 
             isRing (bool, optional):
                 Whether the chromosome chain is circular or not (Used to simulate bacteria genome, for example). f :code:`bool(isRing)` is :code:`True` , the first and last particles of the chain are linked, forming a ring. (Default value = :code:`False`).
-                
+            chrID (str, optional):
+                Chromosome identifier found on the bed file
         Returns:
             :math:`(N, 3)` :class:`numpy.ndarray`:
                 Returns an array of positions.
@@ -1269,7 +1270,7 @@ class MiChroM:
         x = []
         y = []
         z = []
-        self._translate_type(ChromSeq,chr)
+        self._translate_type(ChromSeq,chrID)
         beads = len(self.type_list_letter)
         
         for i in range(beads):
@@ -1313,14 +1314,18 @@ class MiChroM:
         
         return random.choices(population=[0,1,2,3,4,5], k=Nbeads)
     
-    def _translate_type(self, filename,chr):
+    def _translate_type(self, filename, chrID):
         
-        R"""Internal function that converts the letters of the types numbers following the rule: 'A1':0, 'A2':1, 'B1':2, 'B2':3,'B3':4,'B4':5, 'NA' :6.
+        R"""Internal function that loads sequence files.
         
-         Args:
+        Args:
 
             filename (file, required):
-                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`_.
+                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. 
+                A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                It can also be a bed file (e.g. output of `PyMEGABASE <https://github.com/ed29rice/PyMEGABASE>`). In this case, chromosome identifier is required.
+            chrID (str, optional):
+                Chromosome identifier found on the bed file 
 
         """
         self.diff_types = []
@@ -1329,19 +1334,19 @@ class MiChroM:
         af = open(filename,'r')
         pos = af.read().splitlines()
 
-        if filename[-3:]=='bed':
-            if chr==None:
+        if filename[-3:] == 'bed':
+            if chrID == None:
                 raise ValueError("Select a valid chromosome present on the bed file")
             else:
                 for t in range(1,len(pos)):
                     pos[t] = pos[t].split()
-                    if pos[t][0]=='chr'+str(chr):
+                    if pos[t][0] == 'chr'+str(chrID):
                         if pos[t][3] in self.diff_types:
                             self.type_list_letter.append(pos[t][3])
                         else:
                             self.diff_types.append(pos[t][3]) 
                             self.type_list_letter.append(pos[t][3])
-            if len(self.type_list_letter)==0:
+            if len(self.type_list_letter) == 0:
                 raise ValueError("Select a valid chromosome present on the bed file")
         else:
             for t in range(len(pos)):
@@ -1352,17 +1357,18 @@ class MiChroM:
                     self.diff_types.append(pos[t][1]) 
                     self.type_list_letter.append(pos[t][1])
 
-    def createLine(self, ChromSeq, chr=None):
+    def createLine(self, ChromSeq, chrID=None):
         
         R"""
         Creates a straight line for the initial configuration of the chromosome polymer.
         
         Args:
-
             ChromSeq (file, required):
-                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
-            length_scale (float, required):
-                Length scale used in the distances of the system in units of reduced length :math:`\sigma`. (Default value = 1.0).    
+                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. 
+                A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                It can also be a bed file (e.g. output of `PyMEGABASE <https://github.com/ed29rice/PyMEGABASE>`). In this case, chromosome identifier is required. 
+            chrID (str, optional):
+                Chromosome identifier found on the bed file   
                 
         Returns:
             :math:`(N, 3)` :class:`numpy.ndarray`:
@@ -1370,7 +1376,7 @@ class MiChroM:
    
         """
 
-        self._translate_type(ChromSeq, chr=chr)
+        self._translate_type(ChromSeq, chrID=chrID)
         beads = len(self.type_list_letter)
 
         length_scale = 1.0
@@ -1388,21 +1394,26 @@ class MiChroM:
 
         return np.vstack([x,y,z]).T
     
-    def createRandomWalk(self, ChromSeq=None, chr=None):    
+    def createRandomWalk(self, ChromSeq=None, chrID=None):    
         R"""
         Creates a chromosome polymer chain with beads position based on a random walk.
         
         Args:
-
         ChromSeq (file, required):
-            Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. 
+                A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+                It can also be a bed file (e.g. output of `PyMEGABASE <https://github.com/ed29rice/PyMEGABASE>`). In this case, chromosome identifier is required. 
+            isRing (bool, optional):
+                Whether the chromosome chain is circular or not (Used to simulate bacteria genome, for example). f :code:`bool(isRing)` is :code:`True` , the first and last particles of the chain are linked, forming a ring. (Default value = :code:`False`).
+            chrID (str, optional):
+                Chromosome identifier found on the bed file
         Returns:
             :math:`(N, 3)` :class:`numpy.ndarray`:
                 Returns an array of positions.
    
         """
         
-        self._translate_type(ChromSeq, chr=chr)
+        self._translate_type(ChromSeq, chrID=chrID)
         Nbeads = len(self.type_list_letter)
 
         segment_length = 1
@@ -1423,7 +1434,7 @@ class MiChroM:
 
         return np.vstack([x, y, z]).T
 
-    def initStructure(self, mode='auto', CoordFiles=None, ChromSeq=None, isRing=False, chr=None):
+    def initStructure(self, mode='auto', CoordFiles=None, ChromSeq=None, isRing=False, chrID=None):
 
         R"""
         Creates the coordinates for the initial configuration of the chromosomal chains and sets their sequence information.
@@ -1441,14 +1452,14 @@ class MiChroM:
 
         CoordFiles (list of files, optional):
             List of files with xyz information for each chromosomal chain. Accepts .ndb, .pdb, and .gro files. All files provided in the list must be in the same file format.
-
-        ChromSeq (list of files, optional):
-            List of files with sequence information for each chromosomal chain. The first column should contain the locus index. The second column should have the locus type annotation. A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
-            If the chromatin types considered are different from the ones used in the original MiChroM (A1, A2, B1, B2, B3, B4, and NA), the sequence file must be provided when loading .pdb or .gro files, otherwise, all the chains will be defined with 'NA' type. For the .ndb files, the sequence used is the one provided in the file.
-        
+        ChromSeq (file, required):
+            Chromatin sequence of types file. The first column should contain the locus index. The second column should have the locus type annotation. 
+            A template of the chromatin sequence of types file can be found at the `Nucleome Data Bank (NDB) <https://ndb.rice.edu/static/text/chr10_beads.txt>`__.
+            It can also be a bed file (e.g. output of `PyMEGABASE <https://github.com/ed29rice/PyMEGABASE>`). In this case, chromosome identifier is required. 
         isRing (bool, optional):
-            Whether the chromosome chain is circular or not (used to simulate bacteria genome, for example). To be used with the option :code:`'random'`. If :code:`bool(isRing)` is :code:`True` , the first and last particles of the chain are linked, forming a ring. (Default value = :code:`False`).
- 
+            Whether the chromosome chain is circular or not (Used to simulate bacteria genome, for example). f :code:`bool(isRing)` is :code:`True` , the first and last particles of the chain are linked, forming a ring. (Default value = :code:`False`).
+        chrID (str, optional):
+            Chromosome identifier found on the bed file
         Returns:
             :math:`(N, 3)` :class:`numpy.ndarray`:
                 Returns an array of positions.
@@ -1486,15 +1497,15 @@ class MiChroM:
 
         if mode == 'line':
 
-            return self.createLine(ChromSeq=ChromSeq[0], chr=chr)
+            return self.createLine(ChromSeq=ChromSeq[0], chrID=chrID)
 
         elif mode == 'spring':
 
-            return self.createSpringSpiral(ChromSeq=ChromSeq[0], isRing=isRing, chr=chr)
+            return self.createSpringSpiral(ChromSeq=ChromSeq[0], isRing=isRing, chrID=chrID)
 
         elif mode == 'random':
 
-            return self.createRandomWalk(ChromSeq=ChromSeq[0], chr=chr)
+            return self.createRandomWalk(ChromSeq=ChromSeq[0], chrID=chrID)
 
         elif mode == 'ndb':
 
